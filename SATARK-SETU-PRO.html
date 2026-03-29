@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satark-Setu | Maharashtra Disaster Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .pulse-red { animation: pulse-red 2s infinite; }
+        @keyframes slide-in { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .slide-in { animation: slide-in 0.3s ease-out; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #dc2626; }
+        .leaflet-container { z-index: 1; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0f172a',
+                        secondary: '#1e293b',
+                        accent: '#ef4444',
+                        neon: '#f97316'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-primary text-white overflow-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
+        const { AlertTriangle, Map, Activity, Phone, Menu, X, Droplets, Wind, Thermometer, Shield, CheckCircle, Clock, MapPin } = lucide;
+
+        // Mock Data
+        const mockAlerts = [
+            { id: 1, type: 'Severe', location: 'Andheri Subway', title: 'Waterlogging Alert', image: 'https://images.unsplash.com/photo-1605727216801-e27ce1d0cc28?w=400&h=250&fit=crop', status: 'Active', time: '15 min ago' },
+            { id: 2, type: 'Warning', location: 'Dadar TT', title: 'Traffic Disruption', image: 'https://images.unsplash.com/photo-1444723121867-c61629d7b581?w=400&h=250&fit=crop', status: 'Monitoring', time: '32 min ago' },
+            { id: 3, type: 'Advisory', location: 'Powai Lake', title: 'Water Level Rising', image: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=400&h=250&fit=crop', status: 'Stable', time: '1 hour ago' },
+            { id: 4, type: 'Severe', location: 'Worli Sea Link', title: 'High Wind Speed', image: 'https://images.unsplash.com/photo-1599940824399-b87987ce0799?w=400&h=250&fit=crop', status: 'Active', time: '2 hours ago' }
+        ];
+
+        const mockRumors = [
+            { id: 1, title: 'FALSE: Bridge Collapse Rumor', reality: 'No structural damage reported. Sea Link operational.', image: 'https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=400&h=250&fit=crop', verified: true },
+            { id: 2, title: 'FALSE: Evacuation Order', reality: 'No evacuation orders issued. Stay in your locations.', image: 'https://images.unsplash.com/photo-1469598614039-ccfeb0a21111?w=400&h=250&fit=crop', verified: true },
+            { id: 3, title: 'TRUE: Heavy Rainfall Warning', reality: 'IMD confirms heavy rain expected in next 6 hours.', image: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=400&h=250&fit=crop', verified: true }
+        ];
+
+        const sensorData = [
+            { time: '00:00', waterLevel: 12.5, windSpeed: 45 },
+            { time: '01:00', waterLevel: 12.8, windSpeed: 48 },
+            { time: '02:00', waterLevel: 13.2, windSpeed: 52 },
+            { time: '03:00', waterLevel: 13.9, windSpeed: 55 },
+            { time: '04:00', waterLevel: 14.5, windSpeed: 58 },
+            { time: '05:00', waterLevel: 15.1, windSpeed: 62 }
+        ];
+
+        const emergencyContacts = [
+            { name: 'National Emergency', number: '112', icon: '🚨', color: 'from-red-600 to-red-500' },
+            { name: 'Police', number: '100', icon: '👮', color: 'from-blue-600 to-blue-500' },
+            { name: 'Ambulance', number: '108', icon: '🚑', color: 'from-green-600 to-green-500' },
+            { name: 'Fire Brigade', number: '101', icon: '🔥', color: 'from-orange-600 to-orange-500' },
+            { name: 'BMC Disaster', number: '1916', icon: '🏢', color: 'from-purple-600 to-purple-500' },
+            { name: 'NDRF', number: '011-24363260', icon: '⛑️', color: 'from-indigo-600 to-indigo-500' }
+        ];
+
+        // Components
+        function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }) {
+            const tabs = [
+                { id: 'command', icon: '📊', label: 'Command Center' },
+                { id: 'map', icon: '🗺️', label: 'Disaster Map' },
+                { id: 'sensors', icon: '📈', label: 'IoT Sensors' },
+                { id: 'safety', icon: '🆘', label: 'Safety & SOS' }
+            ];
+
+            return (
+                <div className={`fixed lg:relative z-50 h-full bg-secondary transition-all duration-300 ${isOpen ? 'w-64' : 'w-0 lg:w-20'}`}>
+                    <div className="p-4">
+                        <div className="flex items-center justify-between mb-8">
+                            {isOpen && <h1 className="text-xl font-bold bg-gradient-to-r from-accent to-neon bg-clip-text text-transparent">Satark-Setu</h1>}
+                            <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden p-2 hover:bg-primary rounded-lg">
+                                {isOpen ? <X size={20} /> : <Menu size={20} />}
+                            </button>
+                        </div>
+                        <nav className="space-y-2">
+                            {tabs.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+                                        activeTab === tab.id 
+                                            ? 'bg-accent text-white shadow-lg shadow-accent/50' 
+                                            : 'text-gray-400 hover:bg-primary hover:text-white'
+                                    }`}
+                                >
+                                    <span className="text-xl">{tab.icon}</span>
+                                    {isOpen && <span>{tab.label}</span>}
+                                </button>
+                            ))}
+                        </nav>
+                    </div>
+                </div>
+            );
+        }
+
+        function MetricCard({ title, value, icon, trend, color }) {
+            return (
+                <div className="bg-secondary rounded-xl p-6 border border-gray-700 hover:border-accent transition-all hover:shadow-lg hover:shadow-accent/20">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-gray-400 text-sm mb-1">{title}</p>
+                            <p className={`text-3xl font-bold ${color}`}>{value}</p>
+                            {trend && <p className="text-xs text-gray-500 mt-2">{trend}</p>}
+                        </div>
+                        <div className="text-4xl">{icon}</div>
+                    </div>
+                </div>
+            );
+        }
+
+        function NewsCard({ item, type }) {
+            return (
+                <div className="bg-secondary rounded-xl overflow-hidden border border-gray-700 hover:border-accent transition-all group">
+                    <div className="relative h-48 overflow-hidden">
+                        <img 
+                            src={item.image} 
+                            alt={item.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute top-2 right-2">
+                            {type === 'alert' ? (
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                    item.type === 'Severe' ? 'bg-red-600' :
+                                    item.type === 'Warning' ? 'bg-orange-600' : 'bg-yellow-600'
+                                }`}>
+                                    {item.type}
+                                </span>
+                            ) : (
+                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-600">
+                                    ✓ VERIFIED
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="p-4">
+                        <h3 className="font-bold text-lg mb-2">{item.title}</h3>
+                        {type === 'rumor' && <p className="text-sm text-gray-400 mb-3">{item.reality}</p>}
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span className="flex items-center"><MapPin size={12} className="mr-1" />{item.location || 'Mumbai'}</span>
+                            <span className="flex items-center"><Clock size={12} className="mr-1" />{item.time || 'Recent'}</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function CommandCenter() {
+            return (
+                <div className="space-y-6">
+                    {/* Metric Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <MetricCard title="Active Alerts" value="12" icon="🚨" trend="+3 in last hour" color="text-red-500" />
+                        <MetricCard title="Weather Status" value="32°C" icon="🌧️" trend="Heavy Rain Expected" color="text-blue-500" />
+                        <MetricCard title="Rumors Blocked" value="47" icon="🛡️" trend="All false claims debunked" color="text-green-500" />
+                    </div>
+
+                    {/* Split Feed */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Official Updates */}
+                        <div className="bg-secondary rounded-xl p-6 border border-gray-700">
+                            <h2 className="text-xl font-bold mb-4 flex items-center">
+                                <CheckCircle className="text-blue-500 mr-2" />
+                                Verified Official Updates
+                            </h2>
+                            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                                {mockAlerts.map(alert => (
+                                    <NewsCard key={alert.id} item={alert} type="alert" />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Rumor vs Reality */}
+                        <div className="bg-secondary rounded-xl p-6 border border-gray-700">
+                            <h2 className="text-xl font-bold mb-4 flex items-center">
+                                <Shield className="text-green-500 mr-2" />
+                                Rumor vs Reality Engine
+                            </h2>
+                            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                                {mockRumors.map(rumor => (
+                                    <NewsCard key={rumor.id} item={rumor} type="rumor" />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function DisasterMap() {
+            const mapRef = useRef(null);
+            const [selectedMarker, setSelectedMarker] = useState(null);
+
+            useEffect(() => {
+                if (!mapRef.current) {
+                    mapRef.current = L.map('map').setView([19.0760, 72.8777], 10);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapRef.current);
+
+                    const markers = [
+                        { lat: 19.1136, lng: 72.8697, type: 'severe', location: 'Andheri' },
+                        { lat: 19.0176, lng: 72.8562, type: 'warning', location: 'Worli' },
+                        { lat: 19.0728, lng: 72.8826, type: 'advisory', location: 'Dadar' },
+                        { lat: 19.1334, lng: 72.9133, type: 'severe', location: 'Ghatkopar' },
+                        { lat: 18.9388, lng: 72.8354, type: 'warning', location: 'Colaba' }
+                    ];
+
+                    markers.forEach(m => {
+                        const color = m.type === 'severe' ? 'red' : m.type === 'warning' ? 'orange' : 'blue';
+                        const circle = L.circleMarker([m.lat, m.lng], {
+                            radius: 15,
+                            fillColor: color,
+                            color: '#fff',
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.7
+                        }).addTo(mapRef.current);
+
+                        circle.bindPopup(`
+                            <div style="color: #000;">
+                                <strong>${m.location}</strong><br>
+                                Type: ${m.type.toUpperCase()}<br>
+                                <img src="https://images.unsplash.com/photo-1605727216801-e27ce1d0cc28?w=200&h=150&fit=crop" style="width:100%;margin-top:8px;border-radius:4px;" />
+                            </div>
+                        `);
+                    });
+                }
+            }, []);
+
+            return (
+                <div className="bg-secondary rounded-xl p-6 border border-gray-700">
+                    <h2 className="text-xl font-bold mb-4">Interactive Disaster Map</h2>
+                    <div id="map" className="h-[600px] rounded-lg z-0"></div>
+                </div>
+            );
+        }
+
+        function SensorMonitoring() {
+            const chartData = sensorData;
+
+            return (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="bg-secondary rounded-xl p-6 border border-gray-700">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-bold">Mithi River Level</h3>
+                                <Droplets className="text-blue-500" />
+                            </div>
+                            <p className="text-3xl font-bold text-blue-500 mb-2">15.1m</p>
+                            <p className="text-sm text-gray-400">Danger mark: 18m</p>
+                        </div>
+                        <div className="bg-secondary rounded-xl p-6 border border-gray-700">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-bold">Wind Speed</h3>
+                                <Wind className="text-orange-500" />
+                            </div>
+                            <p className="text-3xl font-bold text-orange-500 mb-2">62 km/h</p>
+                            <p className="text-sm text-gray-400">Gusts up to 80 km/h</p>
+                        </div>
+                        <div className="bg-secondary rounded-xl p-6 border border-gray-700">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-bold">Temperature</h3>
+                                <Thermometer className="text-red-500" />
+                            </div>
+                            <p className="text-3xl font-bold text-red-500 mb-2">32°C</p>
+                            <p className="text-sm text-gray-400">Feels like 36°C</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-secondary rounded-xl p-6 border border-gray-700">
+                        <h3 className="text-xl font-bold mb-4">Water Level Trend (6 Hours)</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                                <XAxis dataKey="time" stroke="#9CA3AF" />
+                                <YAxis stroke="#9CA3AF" />
+                                <Tooltip 
+                                    contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px' }}
+                                    labelStyle={{ color: '#F3F4F6' }}
+                                />
+                                <Line type="monotone" dataKey="waterLevel" stroke="#3B82F6" strokeWidth={3} dot={{ fill: '#3B82F6', r: 6 }} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
+        function SafetyHub() {
+            return (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {emergencyContacts.map((contact, index) => (
+                            <div key={index} className={`bg-gradient-to-r ${contact.color} rounded-xl p-6 hover:scale-105 transition-transform`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-3xl">{contact.icon}</span>
+                                    <Phone className="text-white/80" />
+                                </div>
+                                <p className="text-white/80 text-sm mb-1">{contact.name}</p>
+                                <p className="text-2xl font-bold">{contact.number}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="bg-secondary rounded-xl p-6 border border-gray-700">
+                        <h3 className="text-xl font-bold mb-4">Actionable Guidelines</h3>
+                        <div className="space-y-3">
+                            {[
+                                { title: 'During Heavy Rain', content: 'Avoid waterlogged areas, stay indoors, keep emergency contacts handy, monitor official updates regularly.' },
+                                { title: 'Flood Safety', content: 'Move to higher ground, avoid walking through flood waters, disconnect electrical appliances, follow evacuation orders immediately.' },
+                                { title: 'Wind Storm Precautions', content: 'Secure loose objects, stay away from windows, avoid parking under trees, keep battery-powered radio for updates.' },
+                                { title: 'Emergency Preparedness', content: 'Keep emergency kit ready, maintain list of important contacts, know your nearest shelter location, inform family of your whereabouts.' }
+                            ].map((item, index) => (
+                                <details key={index} className="group bg-primary rounded-lg">
+                                    <summary className="flex justify-between items-center cursor-pointer p-4 font-semibold group-hover:text-accent">
+                                        {item.title}
+                                        <span className="transform group-open:rotate-180 transition-transform">▼</span>
+                                    </summary>
+                                    <div className="px-4 pb-4 text-gray-400">{item.content}</div>
+                                </details>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('command');
+            const [sidebarOpen, setSidebarOpen] = useState(true);
+
+            const renderContent = () => {
+                switch(activeTab) {
+                    case 'command': return <CommandCenter />;
+                    case 'map': return <DisasterMap />;
+                    case 'sensors': return <SensorMonitoring />;
+                    case 'safety': return <SafetyHub />;
+                    default: return <CommandCenter />;
+                }
+            };
+
+            return (
+                <div className="flex h-screen bg-primary">
+                    <Sidebar 
+                        activeTab={activeTab} 
+                        setActiveTab={setActiveTab}
+                        isOpen={sidebarOpen}
+                        setIsOpen={setSidebarOpen}
+                    />
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        <header className="bg-secondary border-b border-gray-700 p-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                    <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-primary rounded-lg lg:block hidden">
+                                        <Menu size={20} />
+                                    </button>
+                                    <h2 className="text-2xl font-bold">
+                                        {activeTab === 'command' && 'Live Command Center'}
+                                        {activeTab === 'map' && 'Interactive Disaster Map'}
+                                        {activeTab === 'sensors' && 'IoT Sensor Monitoring'}
+                                        {activeTab === 'safety' && 'Safety & SOS Hub'}
+                                    </h2>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                    <div className="hidden md:flex items-center space-x-2 text-sm text-gray-400">
+                                        <span className="w-2 h-2 bg-green-500 rounded-full pulse-red"></span>
+                                        <span>Live Sync Active</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+                        <main className="flex-1 overflow-y-auto p-6">
+                            {renderContent()}
+                        </main>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
