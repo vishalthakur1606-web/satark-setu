@@ -132,29 +132,54 @@ async function fetchNewsFeeds() {
     newsContainer.innerHTML = '<div class="text-center text-gray-500 py-4">Updating news...</div>';
     
     try {
-        // Using a public CORS proxy for demo purposes
-        const proxyUrl = 'https://api.allorigins.win/raw?url=';
+        // Using multiple CORS proxies for reliability
+        const proxies = [
+            'https://api.allorigins.win/raw?url=',
+            'https://corsproxy.io/?',
+            'https://thingproxy.freeboard.io/fetch/'
+        ];
+        
         const feedPromises = rssFeeds.map(feed => 
-            fetch(proxyUrl + encodeURIComponent(feed.url))
-                .then(res => res.text())
-                .then(xml => parseRSS(xml, feed.name))
-                .catch(err => {
-                    console.error(`Error fetching ${feed.name}:`, err);
-                    return [];
-                })
+            fetchNewsFromFeed(feed, proxies)
         );
         
         const results = await Promise.all(feedPromises);
         const allNews = results.flat().filter(news => 
             isMaharashtraRelated(news.title + ' ' + news.description)
-        );
+        ).sort((a, b) => b.timestamp - a.timestamp); // Sort by newest first
         
-        displayNewsFeed(allNews.slice(0, 15)); // Show top 15 relevant items
+        displayNewsFeed(allNews.slice(0, 12)); // Show top 12 relevant items
         
     } catch (error) {
         console.error('Error fetching news feeds:', error);
-        newsContainer.innerHTML = '<div class="text-center text-red-500 py-4">Unable to load news. Retrying...</div>';
+        newsContainer.innerHTML = `
+            <div class="text-center text-red-500 py-4">
+                <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <p>Unable to load news right now.</p>
+                <button onclick="fetchNewsFeeds()" class="mt-2 bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">Retry</button>
+            </div>
+        `;
     }
+}
+
+// Fetch news from individual feed with fallback proxies
+async function fetchNewsFromFeed(feed, proxies) {
+    for (const proxy of proxies) {
+        try {
+            const response = await fetch(proxy + encodeURIComponent(feed.url), {
+                timeout: 5000
+            });
+            if (response.ok) {
+                const xml = await response.text();
+                return parseRSS(xml, feed.name);
+            }
+        } catch (err) {
+            continue; // Try next proxy
+        }
+    }
+    return [];
 }
 
 // Parse RSS XML to extract news items
@@ -170,13 +195,54 @@ function parseRSS(xml, sourceName) {
         const link = item.querySelector('link')?.textContent || '';
         const pubDate = item.querySelector('pubDate')?.textContent || '';
         
+        // Try to extract image from different RSS elements
+        let imageUrl = null;
+        
+        // Check for media:content
+        const mediaContent = item.querySelector('content\\:url, media\\:content');
+        if (mediaContent) {
+            imageUrl = mediaContent.getAttribute('url');
+        }
+        
+        // Check for media:thumbnail
+        if (!imageUrl) {
+            const mediaThumbnail = item.querySelector('media\\:thumbnail');
+            if (mediaThumbnail) {
+                imageUrl = mediaThumbnail.getAttribute('url');
+            }
+        }
+        
+        // Check for enclosure
+        if (!imageUrl) {
+            const enclosure = item.querySelector('enclosure');
+            if (enclosure && enclosure.getAttribute('type')?.startsWith('image/')) {
+                imageUrl = enclosure.getAttribute('url');
+            }
+        }
+        
+        // Extract first image from description if no dedicated image field
+        if (!imageUrl) {
+            const imgMatch = description.match(/<img[^>]+src="([^">]+)"/);
+            if (imgMatch) {
+                imageUrl = imgMatch[1];
+            }
+        }
+        
+        // Clean description - remove HTML tags but keep it readable
+        const cleanDescription = description
+            .replace(/<img[^>]*>/g, '')  // Remove image tags
+            .replace(/<br[^>]*>/g, '\n')  // Convert br to newlines
+            .replace(/<\/?[^>]+(>|$)/g, '')  // Remove remaining HTML
+            .trim();
+        
         news.push({
             title: decodeHTML(title),
-            description: decodeHTML(description.replace(/<[^>]*>/g, '')),
+            description: decodeHTML(cleanDescription),
             link: link,
             pubDate: pubDate,
             source: sourceName,
-            timestamp: new Date(pubDate)
+            timestamp: new Date(pubDate),
+            imageUrl: imageUrl
         });
     });
     
@@ -213,27 +279,100 @@ function displayNewsFeed(newsItems) {
     
     container.innerHTML = '';
     
-    newsItems.forEach(item => {
+    newsItems.forEach((item, index) => {
         const newsCard = document.createElement('div');
-        newsCard.className = 'border-l-4 border-orange-400 pl-3 py-2 hover:bg-orange-50 transition-colors cursor-pointer';
-        newsCard.onclick = () => window.open(item.link, '_blank');
+        newsCard.className = 'bg-white border-l-4 border-orange-400 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden mb-3';
+        newsCard.style.scrollMarginTop = '1rem';
         
         const timeAgo = getTimeAgo(item.timestamp);
+        const hasImage = item.imageUrl !== null;
+        
+        // Create unique ID for each article
+        const articleId = `article-${index}`;
         
         newsCard.innerHTML = `
-            <div class="flex justify-between items-start mb-1">
-                <h4 class="font-semibold text-gray-800 text-sm line-clamp-2">${item.title}</h4>
-                <span class="text-xs text-gray-500 ml-2 flex-shrink-0">${timeAgo}</span>
+            <div onclick="toggleArticle('${articleId}')">
+                ${hasImage ? `
+                    <div class="relative h-48 overflow-hidden bg-gray-200">
+                        <img src="${item.imageUrl}" alt="${item.title}" 
+                             class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                             onerror="this.parentElement.style.display='none'">
+                        <div class="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded font-semibold">
+                            News Report
+                        </div>
+                    </div>
+                ` : `
+                    <div class="relative p-4 bg-orange-50">
+                        <div class="flex justify-between items-start">
+                            <span class="bg-orange-500 text-white text-xs px-2 py-1 rounded font-semibold">
+                                News Report
+                            </span>
+                            <span class="text-xs text-gray-500">${timeAgo}</span>
+                        </div>
+                    </div>
+                `}
+                
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-orange-600 uppercase tracking-wide">${item.source}</span>
+                        ${!hasImage ? `<span class="text-xs text-gray-500">${timeAgo}</span>` : ''}
+                    </div>
+                    
+                    <h4 class="font-bold text-gray-800 text-base mb-2 line-clamp-2 hover:text-orange-600 transition-colors">
+                        ${item.title}
+                    </h4>
+                    
+                    <p class="text-sm text-gray-600 mb-3 line-clamp-3" id="preview-${articleId}">
+                        ${item.description.substring(0, 150)}${item.description.length > 150 ? '...' : ''}
+                    </p>
+                    
+                    <div class="flex items-center justify-between">
+                        <button class="text-orange-600 hover:text-orange-700 text-sm font-semibold flex items-center">
+                            <span>Read Full Story</span>
+                            <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                        ${hasImage ? `<span class="text-xs text-gray-500">${timeAgo}</span>` : ''}
+                    </div>
+                </div>
             </div>
-            <p class="text-xs text-gray-600 line-clamp-2 mb-1">${item.description.substring(0, 100)}${item.description.length > 100 ? '...' : ''}</p>
-            <div class="flex items-center justify-between">
-                <span class="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded font-medium">News Report</span>
-                <span class="text-xs text-gray-500">${item.source}</span>
+            
+            <!-- Expanded content (hidden by default) -->
+            <div id="${articleId}" class="hidden border-t border-gray-200 bg-gray-50">
+                <div class="p-4">
+                    <h5 class="font-semibold text-gray-700 mb-2">Full Article:</h5>
+                    <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line mb-4">
+                        ${item.description}
+                    </p>
+                    <a href="${item.link}" target="_blank" rel="noopener noreferrer" 
+                       class="inline-flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        Open Original Source
+                    </a>
+                    <button onclick="toggleArticle('${articleId}')" 
+                            class="ml-2 text-gray-600 hover:text-gray-800 text-sm font-semibold underline">
+                        Close
+                    </button>
+                </div>
             </div>
         `;
         
         container.appendChild(newsCard);
     });
+}
+
+// Toggle article expansion
+function toggleArticle(articleId) {
+    const article = document.getElementById(articleId);
+    if (article.classList.contains('hidden')) {
+        article.classList.remove('hidden');
+        article.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+        article.classList.add('hidden');
+    }
 }
 
 // Get relative time string

@@ -16,6 +16,43 @@
         .twitter-container iframe {
             min-height: 400px;
         }
+        
+        /* Line clamp utilities */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* Smooth transitions */
+        * {
+            transition-property: background-color, border-color, color, fill, stroke;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+        
+        /* Custom scrollbar for news feed */
+        #newsFeed::-webkit-scrollbar {
+            width: 8px;
+        }
+        #newsFeed::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        #newsFeed::-webkit-scrollbar-thumb {
+            background: #fb923c;
+            border-radius: 4px;
+        }
+        #newsFeed::-webkit-scrollbar-thumb:hover {
+            background: #ea580c;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
