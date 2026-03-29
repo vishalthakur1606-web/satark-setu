@@ -127,8 +127,10 @@
 
         <!-- Weather Chart -->
         <div class="glass rounded-xl shadow-lg p-6 mb-6">
-            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center"><svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>Weather Trends</h2>
-            <canvas id="weatherChart" height="80"></canvas>
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center"><svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>Weather Trends (6-Hour Forecast)</h2>
+            <div class="relative w-full" style="height: 300px;">
+                <canvas id="weatherChart"></canvas>
+            </div>
         </div>
     </section>
 

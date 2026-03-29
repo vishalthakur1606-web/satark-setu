@@ -200,18 +200,70 @@ function initializeWeatherChart() {
                 label: 'Temperature (°C)',
                 data: [0, 0, 0, 0, 0, 0],
                 borderColor: 'rgb(251, 146, 60)',
-                backgroundColor: 'rgba(251, 146, 60, 0.1)',
+                backgroundColor: 'rgba(251, 146, 60, 0.2)',
+                borderWidth: 3,
                 tension: 0.4,
-                fill: true
+                fill: true,
+                pointBackgroundColor: 'rgb(251, 146, 60)',
+                pointBorderColor: 'white',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: { 
+                legend: { 
+                    display: true,
+                    labels: {
+                        color: darkMode ? '#f1f5f9' : '#374151',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    titleColor: darkMode ? '#f1f5f9' : '#1f2937',
+                    bodyColor: darkMode ? '#f1f5f9' : '#374151',
+                    borderColor: darkMode ? '#475569' : '#e5e7eb',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + '°C';
+                        }
+                    }
+                }
+            },
             scales: {
-                y: { beginAtIndex: false, grid: { color: 'rgba(0,0,0,0.05)' } },
-                x: { grid: { display: false } }
+                y: { 
+                    beginAtIndex: false, 
+                    grid: { 
+                        color: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' 
+                    },
+                    ticks: {
+                        color: darkMode ? '#f1f5f9' : '#374151',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                x: { 
+                    grid: { 
+                        display: false 
+                    },
+                    ticks: {
+                        color: darkMode ? '#f1f5f9' : '#374151',
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
             }
         }
     });
@@ -223,10 +275,26 @@ function updateWeatherChart(data) {
     const currentHour = new Date().getHours();
     const temps = [];
     for (let i = 0; i < 6; i++) {
-        temps.push(data.hourly.temperature_2m[currentHour + i] || data.current_weather.temperature);
+        const hourIndex = currentHour + i;
+        if (hourIndex < data.hourly.time.length) {
+            temps.push(Math.round(data.hourly.temperature_2m[hourIndex]));
+        } else {
+            temps.push(Math.round(data.current_weather.temperature));
+        }
     }
     
     weatherChart.data.datasets[0].data = temps;
+    
+    // Update colors based on dark mode
+    weatherChart.options.plugins.legend.labels.color = darkMode ? '#f1f5f9' : '#374151';
+    weatherChart.options.plugins.tooltip.backgroundColor = darkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+    weatherChart.options.plugins.tooltip.titleColor = darkMode ? '#f1f5f9' : '#1f2937';
+    weatherChart.options.plugins.tooltip.bodyColor = darkMode ? '#f1f5f9' : '#374151';
+    weatherChart.options.plugins.tooltip.borderColor = darkMode ? '#475569' : '#e5e7eb';
+    weatherChart.options.scales.y.grid.color = darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+    weatherChart.options.scales.y.ticks.color = darkMode ? '#f1f5f9' : '#374151';
+    weatherChart.options.scales.x.ticks.color = darkMode ? '#f1f5f9' : '#374151';
+    
     weatherChart.update();
 }
 
@@ -269,17 +337,17 @@ function loadDisasterInfo() {
     ];
 
     disasterContainer.innerHTML = disasters.map(d => `
-        <div class="disaster-card relative overflow-hidden rounded-lg shadow-lg">
+        <div class="disaster-card relative overflow-hidden rounded-lg shadow-lg" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">
             <img src="${d.image}" alt="${d.title}" class="absolute inset-0 w-full h-full object-cover opacity-20">
             <div class="relative z-10 p-4">
                 <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-lg font-bold">${d.title}</h3>
-                    <span class="${d.color} px-3 py-1 rounded-full text-xs font-semibold">${d.level}</span>
+                    <h3 class="text-lg font-bold" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.9);">${d.title}</h3>
+                    <span class="${d.color} px-3 py-1 rounded-full text-xs font-semibold" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.8); box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${d.level}</span>
                 </div>
-                <p class="text-sm opacity-90">${d.description}</p>
+                <p class="text-sm opacity-95" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.9); font-weight: 500;">${d.description}</p>
                 <div class="mt-3 flex gap-2">
-                    <button onclick="shareAlert('${d.type}')" class="px-3 py-1 bg-white bg-opacity-20 rounded text-xs hover:bg-opacity-30">Share Alert</button>
-                    <button onclick="showDetails('${d.type}')" class="px-3 py-1 bg-white bg-opacity-20 rounded text-xs hover:bg-opacity-30">Details</button>
+                    <button onclick="shareAlert('${d.type}')" class="px-3 py-1 bg-white bg-opacity-30 rounded text-xs hover:bg-opacity-40 transition-all font-semibold" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8); backdrop-filter: blur(4px);">Share Alert</button>
+                    <button onclick="showDetails('${d.type}')" class="px-3 py-1 bg-white bg-opacity-30 rounded text-xs hover:bg-opacity-40 transition-all font-semibold" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8); backdrop-filter: blur(4px);">Details</button>
                 </div>
             </div>
         </div>
@@ -421,6 +489,25 @@ function toggleDarkMode() {
     darkMode = !darkMode;
     document.documentElement.classList.toggle('dark', darkMode);
     localStorage.setItem('darkMode', darkMode);
+    
+    // Update chart colors if it exists
+    if (weatherChart) {
+        updateChartColors();
+    }
+}
+
+function updateChartColors() {
+    if (!weatherChart) return;
+    
+    weatherChart.options.plugins.legend.labels.color = darkMode ? '#f1f5f9' : '#374151';
+    weatherChart.options.plugins.tooltip.backgroundColor = darkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+    weatherChart.options.plugins.tooltip.titleColor = darkMode ? '#f1f5f9' : '#1f2937';
+    weatherChart.options.plugins.tooltip.bodyColor = darkMode ? '#f1f5f9' : '#374151';
+    weatherChart.options.plugins.tooltip.borderColor = darkMode ? '#475569' : '#e5e7eb';
+    weatherChart.options.scales.y.grid.color = darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+    weatherChart.options.scales.y.ticks.color = darkMode ? '#f1f5f9' : '#374151';
+    weatherChart.options.scales.x.ticks.color = darkMode ? '#f1f5f9' : '#374151';
+    weatherChart.update();
 }
 
 // Language
