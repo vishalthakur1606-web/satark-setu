@@ -1,0 +1,126 @@
+=====================================
+  GITHUB + VERCEL DEPLOYMENT
+  Quick Checklist
+=====================================
+
+📋 WHAT YOU NEED:
+   □ GitHub account (free at github.com)
+   □ Vercel account (free at vercel.com)
+   □ GitHub Desktop app (optional but easier)
+   □ This folder: satark-setu
+
+=====================================
+STEP-BY-STEP CHECKLIST
+=====================================
+
+PART 1: GITHUB DESKTOP SETUP
+-----------------------------
+□ Download GitHub Desktop
+   → https://desktop.github.com
+   
+□ Install and sign in with GitHub
+
+□ Open GitHub Desktop
+   → File → Add Local Repository
+   
+□ Choose this folder:
+   C:\Users\visha\OneDrive\Desktop\satark-setu
+   
+□ Click "Create repository" when prompted
+   
+□ Name it: satark-setu
+
+✅ COMMIT FILES
+□ Summary: "Initial commit - Satark-Setu dashboard"
+□ Click "Commit to main"
+
+✅ PUBLISH TO GITHUB
+□ Click "Publish repository"
+□ Name: satark-setu
+□ Keep public (recommended) or private
+□ Click "Publish repository"
+
+🎉 PART 1 DONE! Code is on GitHub!
+
+=====================================
+
+PART 2: DEPLOY TO VERCEL
+-----------------------------
+□ Go to: https://vercel.com
+
+□ Sign up/Login with GitHub
+
+□ Click "Add New Project"
+
+□ Find "satark-setu" under Import Git Repository
+   → Click "Import"
+
+□ Framework Preset: Select "Other"
+
+□ Leave all other settings blank/default
+
+□ Click "Deploy"
+
+□ Wait 30-60 seconds...
+
+□ Click "Continue to Dashboard"
+
+🎉 PART 2 DONE! Site is LIVE!
+
+=====================================
+
+YOUR LIVE URL:
+-------------------------------------
+https://satark-setu.vercel.app
+(You can customize this later)
+
+=====================================
+
+TO UPDATE YOUR SITE LATER:
+-------------------------------------
+□ Edit files in satark-setu folder
+□ Open GitHub Desktop
+□ Commit changes with message
+□ Click "Push origin"
+□ Vercel auto-updates in 1-2 min!
+
+=====================================
+
+TROUBLESHOOTING
+-------------------------------------
+❓ Can't find repo on Vercel?
+   → Refresh page, check GitHub published first
+
+❓ Vercel build failed?
+   → Check build logs, should be instant for static HTML
+
+❓ GitHub Desktop not showing files?
+   → Try File → Add Local Repository again
+
+=====================================
+
+FILES TO UPLOAD (should be automatic):
+-------------------------------------
+✓ index.html
+✓ app.js
+✓ LAUNCH.bat
+✓ README.md
+✓ .gitignore
+✓ All other files in folder
+
+=====================================
+
+TIME REQUIRED: ~10 minutes
+COST: FREE ✅
+
+=====================================
+
+NEED MORE HELP?
+→ Check DEPLOY_GUIDE.md for detailed instructions
+→ Or search "Vercel deploy static site" on YouTube
+
+=====================================
+
+GOOD LUCK! 🚀
+
+Your disaster dashboard will be live soon!

@@ -1,0 +1,74 @@
+=====================================
+  SATARK-SETU DASHBOARD
+  Ready to Use!
+=====================================
+
+📍 LOCATION: This folder on your desktop
+
+🚀 HOW TO OPEN (Choose any method):
+
+   METHOD 1 - EASIEST:
+   👉 Double-click "LAUNCH.bat" file
+   
+   METHOD 2:
+   👉 Double-click "index.html" file
+   
+   METHOD 3:
+   👉 Drag "index.html" into Chrome/Firefox/Edge
+
+✅ THAT'S IT! NO SETUP NEEDED!
+
+=====================================
+WHAT YOU'LL SEE:
+=====================================
+
+📊 LIVE FEATURES:
+   ✓ Real-time weather for 5 Maharashtra cities
+   ✓ Official Twitter feeds from govt sources
+   ✓ Automated news aggregation
+   ✓ Green pulse = Live sync active
+
+🌆 CITIES SUPPORTED:
+   • Mumbai
+   • Pune
+   • Nagpur
+   • Thane
+   • Mira Bhayandar
+
+=====================================
+IMPORTANT NOTES:
+=====================================
+
+⏱️ FIRST LOAD: Takes 3-5 seconds (Twitter widgets loading)
+🔄 AUTO-REFRESH: Weather every 30s, News every 5min
+🌐 INTERNET REQUIRED: For live data feeds
+
+=====================================
+TROUBLESHOOTING:
+=====================================
+
+If Twitter feeds don't show:
+→ Wait 5-10 seconds, they load slowly
+
+If weather shows "Loading...":
+→ Check internet connection
+→ Refresh the page (F5)
+
+If nothing works:
+→ Try a different browser (Chrome recommended)
+
+=====================================
+FILES IN THIS FOLDER:
+=====================================
+
+📄 index.html      ← Main dashboard (OPEN THIS)
+📄 app.js          ← Automation code
+📄 LAUNCH.bat      ← One-click opener
+📄 README.md       ← Full documentation
+📄 START_HERE.txt  ← Quick guide
+
+=====================================
+
+ENJOY YOUR DASHBOARD! 🚨
+
+Built for Maharashtra's safety

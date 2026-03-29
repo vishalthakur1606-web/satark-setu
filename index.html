@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satark-Setu | Maharashtra Disaster Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-live {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse-animation {
+            animation: pulse-live 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .twitter-container iframe {
+            min-height: 400px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-red-700 to-red-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl font-bold">Satark-Setu</h1>
+                        <p class="text-sm text-red-100">Maharashtra Disaster Management Dashboard</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <select id="citySelector" class="bg-white text-red-700 px-4 py-2 rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                        <option value="mumbai">Mumbai</option>
+                        <option value="pune">Pune</option>
+                        <option value="nagpur">Nagpur</option>
+                        <option value="thane">Thane</option>
+                        <option value="mira-bhayandar">Mira Bhayandar</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section - Live Metrics -->
+    <section class="container mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Weather Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-gray-600 text-sm font-semibold">Live Weather Status</h3>
+                    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+                    </svg>
+                </div>
+                <div id="weatherData" class="space-y-1">
+                    <div class="flex items-baseline space-x-2">
+                        <span id="temperature" class="text-3xl font-bold text-gray-800">--°C</span>
+                    </div>
+                    <p id="weatherCondition" class="text-gray-600 text-sm">Loading...</p>
+                    <p id="rainfall" class="text-xs text-gray-500">Rainfall: -- mm</p>
+                </div>
+            </div>
+
+            <!-- Alerts Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-gray-600 text-sm font-semibold">Active Official Alerts</h3>
+                    <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                </div>
+                <div class="text-3xl font-bold text-gray-800" id="alertCount">--</div>
+                <p class="text-xs text-gray-500 mt-1">From official sources</p>
+            </div>
+
+            <!-- System Status Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-gray-600 text-sm font-semibold">System Status</h3>
+                    <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-green-500 rounded-full pulse-animation"></div>
+                    <span class="text-green-700 font-semibold">Live Sync Active</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Auto-refresh enabled</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Split Screen Feed -->
+    <section class="container mx-auto px-4 pb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Official Updates -->
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                        Verified Official Updates
+                    </h2>
+                    <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-semibold">LIVE</span>
+                </div>
+                <div class="twitter-official space-y-4">
+                    <!-- Mumbai Police -->
+                    <div class="twitter-container">
+                        <blockquote class="twitter-tweet" data-theme="light" data-lang="en">
+                            <a href="https://twitter.com/MumbaiPolice?ref_src=twsrc%5Etfw">Tweets by MumbaiPolice</a>
+                        </blockquote>
+                    </div>
+                    <!-- BMC -->
+                    <div class="twitter-container mt-4">
+                        <blockquote class="twitter-tweet" data-theme="light" data-lang="en">
+                            <a href="https://twitter.com/mybmc?ref_src=twsrc%5Etfw">Tweets by mybmc</a>
+                        </blockquote>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: News Reports -->
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                        </svg>
+                        Automated News Reports
+                    </h2>
+                    <span class="bg-orange-100 text-orange-800 text-xs px-3 py-1 rounded-full font-semibold">AUTO-FETCH</span>
+                </div>
+                <div id="newsFeed" class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                    <div class="text-center text-gray-500 py-8">Loading news feeds...</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Additional Official Sources -->
+    <section class="container mx-auto px-4 pb-8">
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">More Official Sources</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- IMD Weather -->
+                <div class="border rounded-lg p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-gray-700">IMD Weather</h3>
+                        <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded font-semibold">Official</span>
+                    </div>
+                    <blockquote class="twitter-tweet" data-theme="light" data-lang="en">
+                        <a href="https://twitter.com/IMDMumbai?ref_src=twsrc%5Etfw">Tweets by IMDMumbai</a>
+                    </blockquote>
+                </div>
+                <!-- NDRF -->
+                <div class="border rounded-lg p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-gray-700">NDRF Updates</h3>
+                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-semibold">Official</span>
+                    </div>
+                    <blockquote class="twitter-tweet" data-theme="light" data-lang="en">
+                        <a href="https://twitter.com/NDRFHQ?ref_src=twsrc%5Etfw">Tweets by NDRFHQ</a>
+                    </blockquote>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Twitter Widgets Script -->
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+    <!-- Main Application Script -->
+    <script src="app.js"></script>
+    
+    <!-- Auto-open in browser -->
+    <script>
+        // This file can be opened directly in any browser - no server needed!
+        console.log('Satark-Setu: Open this file in your browser to view the dashboard');
+    </script>
+</body>
+</html>
